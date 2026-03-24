@@ -10,6 +10,12 @@ Option Explicit
 Public Sub RUN_NEWMMPP()
     Dim prevSU As Boolean
     Dim prevEA As Boolean
+    Dim wb As Workbook
+    Dim wsSource As Worksheet
+    Dim wsNewScProd As Worksheet
+    Dim wsNewSf As Worksheet
+    Dim lastRow As Long
+    Dim alertState As Boolean
 
     prevSU = Application.ScreenUpdating
     prevEA = Application.EnableEvents
@@ -18,48 +24,23 @@ Public Sub RUN_NEWMMPP()
     Application.ScreenUpdating = False
     Application.EnableEvents = False
 
-    ' New sequence entrypoint (local to this module).
-    ' Replace the placeholder calls below with your actual steps.
-    Call NEW_SEQ_STEP_01
-    Call NEW_SEQ_STEP_02
-
-CleanExit:
-    Application.ScreenUpdating = prevSU
-    Application.EnableEvents = prevEA
-    Exit Sub
-
-CleanFail:
-    Application.ScreenUpdating = prevSU
-    Application.EnableEvents = prevEA
-    MsgBox "RUN_NEWMMPP error: " & Err.Description & " (" & Err.Number & ")", vbCritical
-    Err.Clear
-End Sub
-
-Private Sub NEW_SEQ_STEP_01()
-    Dim wb As Workbook
-    Dim wsSource As Worksheet
-    Dim wsNewScProd As Worksheet
-    Dim wsNewSf As Worksheet
-    Dim lastRow As Long
-    Dim alertState As Boolean
-
     Set wb = ActiveWorkbook
     If wb Is Nothing Then
-        Err.Raise vbObjectError + 2101, "NEW_SEQ_STEP_01", "No active workbook."
+        Err.Raise vbObjectError + 2101, "RUN_NEWMMPP", "No active workbook."
     End If
 
     On Error Resume Next
     Set wsSource = wb.Worksheets("SC_PROD")
-    On Error GoTo 0
+    On Error GoTo CleanFail
     If wsSource Is Nothing Then
-        Err.Raise vbObjectError + 2102, "NEW_SEQ_STEP_01", "Source sheet not found: SC_PROD"
+        Err.Raise vbObjectError + 2102, "RUN_NEWMMPP", "Source sheet not found: SC_PROD"
     End If
 
     alertState = Application.DisplayAlerts
 
     On Error Resume Next
     Set wsNewScProd = wb.Worksheets("NEW_SC_PROD")
-    On Error GoTo 0
+    On Error GoTo CleanFail
     If Not wsNewScProd Is Nothing Then
         Application.DisplayAlerts = False
         wsNewScProd.Delete
@@ -81,7 +62,7 @@ Private Sub NEW_SEQ_STEP_01()
 
     On Error Resume Next
     Set wsNewSf = wb.Worksheets("NEW_SF")
-    On Error GoTo 0
+    On Error GoTo CleanFail
     If Not wsNewSf Is Nothing Then
         Application.DisplayAlerts = False
         wsNewSf.Delete
@@ -96,9 +77,14 @@ Private Sub NEW_SEQ_STEP_01()
     lastRow = wsNewScProd.Cells(wsNewScProd.Rows.Count, "H").End(xlUp).Row
     wsNewSf.Range("A1:A" & lastRow).Value = wsNewScProd.Range("H1:H" & lastRow).Value
 
-    Application.DisplayAlerts = alertState
-End Sub
+CleanExit:
+    Application.ScreenUpdating = prevSU
+    Application.EnableEvents = prevEA
+    Exit Sub
 
-Private Sub NEW_SEQ_STEP_02()
-    ' Reserved for next sequence steps.
+CleanFail:
+    Application.ScreenUpdating = prevSU
+    Application.EnableEvents = prevEA
+    MsgBox "RUN_NEWMMPP error: " & Err.Description & " (" & Err.Number & ")", vbCritical
+    Err.Clear
 End Sub
